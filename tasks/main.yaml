@@ -65,7 +65,7 @@
 - name: install requirements
   command:
     chdir: ~/{{ item.service }}
-    cmd: "{{ item.virtualenv|default('.venv') }}/bin/pip install -r requirements.txt"
+    cmd: "{{ item.virtualenv|default('.venv') }}/bin/pip install -r {{ item.requirements|default('requirements.txt') }}"
   loop: "{{ python_services }}"
   notify: restart services
 - name: create services
