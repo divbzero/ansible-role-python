@@ -60,12 +60,12 @@
 - name: create virtualenv
   command:
     chdir: ~/{{ item.service }}
-    cmd: ~/.pyenv/shims/python -m venv .venv
+    cmd: ~/.pyenv/shims/python -m venv {{ item.virtualenv|default('.venv') }}
   loop: "{{ python_services }}"
 - name: install requirements
   command:
     chdir: ~/{{ item.service }}
-    cmd: .venv/bin/pip install -r requirements.txt
+    cmd: "{{ item.virtualenv|default('.venv') }}/bin/pip install -r requirements.txt"
   loop: "{{ python_services }}"
   notify: restart services
 - name: create services
