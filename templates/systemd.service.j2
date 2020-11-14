@@ -1,0 +1,15 @@
+[Unit]
+Description={{ item.service|mandatory }} daemon
+After=network.target
+
+[Service]
+User={{ ansible_user }}
+Group={{ ansible_user }}
+WorkingDirectory=/home/{{ ansible_user }}/{{ item.service }}
+{% for env in item.environment|default([]) %}
+Environment={{ env }}
+{% endfor -%}
+ExecStart={{ item.command|mandatory }}
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,77 @@
+- name: update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+- name: install Ansible dependencies
+  apt:
+    pkg:
+      - git
+      - rsync
+  become: yes
+- name: install python (1/5)
+  apt:
+    # https://github.com/pyenv/pyenv/wiki#suggested-build-environment
+    pkg:
+      - build-essential
+      - curl
+      - libbz2-dev
+      - libffi-dev
+      - liblzma-dev
+      - libncurses5-dev
+      - libreadline-dev
+      - libsqlite3-dev
+      - libssl-dev
+      - libxml2-dev
+      - libxmlsec1-dev
+      - llvm
+      - make
+      - tk-dev
+      - wget
+      - xz-utils
+      - zlib1g-dev
+    install_recommends: no
+  become: yes
+- name: install python (2/5)
+  git:
+    repo: https://github.com/pyenv/pyenv.git
+    dest: ~/.pyenv
+- name: install python (3/5)
+  blockinfile:
+    path: ~/.profile
+    block: |
+
+      # enable pyenv
+      export PATH="$HOME/.pyenv/bin:$PATH"
+      eval "$(pyenv init -)"
+    create: yes
+- name: install python (4/5)
+  command: ~/.pyenv/bin/pyenv install -s {{ python_version }}
+- name: install python (5/5)
+  command: ~/.pyenv/bin/pyenv global {{ python_version }}
+- name: upload services
+  synchronize:
+    src: "{{ item.directory|mandatory }}/"
+    dest: ~/{{ item.service|mandatory }}
+    owner: no
+    group: no
+  loop: "{{ python_services }}"
+  notify: restart services
+- name: create virtualenv
+  command:
+    chdir: ~/{{ item.service }}
+    cmd: ~/.pyenv/shims/python -m venv .venv
+  loop: "{{ python_services }}"
+- name: install requirements
+  command:
+    chdir: ~/{{ item.service }}
+    cmd: .venv/bin/pip install -r requirements.txt
+  loop: "{{ python_services }}"
+  notify: restart services
+- name: create services
+  template:
+    src: systemd.service.j2
+    dest: /etc/systemd/system/{{ item.service }}.service
+  loop: "{{ python_services }}"
+  become: yes
+  notify: restart services

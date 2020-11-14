@@ -1,0 +1,6 @@
+- name: restart services
+  service:
+    name: "{{ item.service }}"
+    state: restarted
+  loop: "{{ python_services }}"
+  become: yes
