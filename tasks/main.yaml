@@ -68,6 +68,16 @@
     cmd: "{{ item.virtualenv|default('.venv') }}/bin/pip install -r {{ item.requirements|default('requirements.txt') }}"
   loop: "{{ python_services }}"
   notify: restart services
+- name: create socket
+  file:
+    path: "{{ item.socket }}"
+    owner: "{{ item.socket_user|default(ansible_user) }}"
+    group: "{{ item.socket_group|default('www-data') }}"
+    mode: "{{ item.socket_mode|default('0660') }}"
+  loop: "{{ python_services }}"
+  when: item.socket is defined
+  become: yes
+  notify: restart services
 - name: create services
   template:
     src: systemd.service.j2
